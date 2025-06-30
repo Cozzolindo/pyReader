@@ -20,7 +20,7 @@ file_folder = './pdf'
 output = './csv/output.csv'
 
 supplier = re.compile(r'DE (.*) OS')
-invoiceDate = re.compile(r'(\d{2}/\d{2}/\d{4})')
+invoiceDate = re.compile(r'(\d{2}[./]\d{2}[./]\d{4})')
 invoice = re.compile(r'Nº (.*)')
 description = re.compile(r'\d+\s+(.*?)\s+\d+')
 amount = re.compile(r'(\S+)$')
@@ -46,23 +46,30 @@ for file in glob.glob(os.path.join(file_folder, '*.pdf')):
             text = page.extract_text()
             lines_list = text.split('\n')
             for line in lines_list:
-                #print(line)
+                print(line)
                 match = supplier.search(line)
                 if match and supplierName is None:
                     supplierName = match.group(1)
                 match = invoice.search(line)
                 if match and invoiceNum is None:
-                    invoiceNum = match.group(1)
-                
-                if line.endswith("DATA DA EMISSÃO") and invoiceDateValue is None:
-                    nextLine = lines_list[line_num + 1]
-                    match = amount.search(nextLine)
-                    if match:
-                        invoiceDateValue = match.group(1)
-                if line.startswith("J") and jeevesName is None:
+                    invoiceNum = match.group(1)     
+                         
+                if line.upper().endswith("DATA DA EMISSÃO") or line.upper().endswith("DATA EMISSÃO"):
+                    count = line_num
+                    while True:
+                        nextLine = lines_list[count + 1]
+                        match = invoiceDate.search(nextLine)
+                        print("Checking line:", nextLine)
+                        if match and invoiceDateValue is None:
+                            invoiceDateValue = match.group(1)
+                            print("Invoice Date:", invoiceDateValue)
+                        if nextLine.upper().endswith("SAÍDA"):
+                            break
+                        count += 1
+                if line.upper().startswith("JEEVES") and jeevesName is None:
                     jeevesList = line.split(' ')
                     jeevesName = ' '.join(jeevesList[:3])
-                if line.startswith("DADOS DO PRODUTO"):
+                if line.upper().startswith("DADOS DO PRODUTO"):
                     count = line_num
                     while True:
                         nextLine = lines_list[count + 1]
@@ -71,9 +78,9 @@ for file in glob.glob(os.path.join(file_folder, '*.pdf')):
                             prodName = match.group(1)
                             prodList.append(prodName)
                         count += 1
-                        if nextLine.startswith("CÁLCULO DO"):
+                        if nextLine.upper().startswith("CÁLCULO DO"):
                             break
-                if line.endswith("VALOR TOTAL DA NOTA"):
+                if line.upper().endswith("VALOR TOTAL DA NOTA"):
                     nextLine = lines_list[line_num + 1]
                     match = amount.search(nextLine)
                     if match and totalAmount is None:
@@ -83,7 +90,7 @@ for file in glob.glob(os.path.join(file_folder, '*.pdf')):
                 line_num += 1
 
     # Extracting the month and year from the invoice date
-    dateList = invoiceDateValue.split('/')
+    dateList = re.split(r'[./]', invoiceDateValue)
 
     # Join the product names into a single string
     prodList = ', '.join(prodList)  
