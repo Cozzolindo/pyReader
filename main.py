@@ -53,10 +53,10 @@ for file in glob.glob(os.path.join(file_folder, '*.pdf')):
                 match = invoice.search(line)
                 if match and invoiceNum is None:
                     invoiceNum = match.group(1)
-                match = invoiceDate.search(line)
+                
                 if line.endswith("DATA DA EMISSÃO") and invoiceDateValue is None:
                     nextLine = lines_list[line_num + 1]
-                    match = invoiceDate.search(nextLine)
+                    match = amount.search(nextLine)
                     if match:
                         invoiceDateValue = match.group(1)
                 if line.startswith("J") and jeevesName is None:
@@ -84,8 +84,9 @@ for file in glob.glob(os.path.join(file_folder, '*.pdf')):
 
     # Extracting the month and year from the invoice date
     dateList = invoiceDateValue.split('/')
-    prodList = ', '.join(prodList)  # Join the product names into a single string
-    print(prodList)
+
+    # Join the product names into a single string
+    prodList = ', '.join(prodList)  
 
     # Create a namedtuple instance with the extracted values
     line_instance = lines(
