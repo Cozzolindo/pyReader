@@ -9,7 +9,7 @@ from collections import namedtuple
 
 lines = namedtuple('Line', [
     'Category', 'Received_date', 'Invoice_date', 'Due_Date', 'Amount', 'Currency', 'Supplier', 'Description',
-    'Expense_Period', 'Requester', 'Approval', 'Jeeves_Holding_Brasil_Jeeves_Brasil_Financas', 'Booked_AP',
+    'Expense_Period', 'Requester', 'Approval', 'Company_Name', 'Booked_AP',
     'Paid_Not_Paid', 'Date_for_schedule_payment', 'Payment_Date', 'Month', 'Year', 'Invoice', 'Link', 'Note',
     'PAID', 'Tax_to_pay', 'Banco', 'VENDOR_ID', 'DEP', 'Approval_status', 'Approval_support', 'Email_subject',
     'Email_sender', 'Payment_receipt', 'Booked_Expense', 'Booked_payment'
@@ -37,7 +37,7 @@ for file in glob.glob(os.path.join(file_folder, '*.pdf')):
     totalAmount = None
     invoiceNum = None
     invoiceDateValue = None
-    jeevesName = None
+    companyName = None
     prodName = None
     prodList = []
 
@@ -46,7 +46,7 @@ for file in glob.glob(os.path.join(file_folder, '*.pdf')):
             text = page.extract_text()
             lines_list = text.split('\n')
             for line in lines_list:
-                print(line)
+                #print(line)
                 match = supplier.search(line)
                 if match and supplierName is None:
                     supplierName = match.group(1)
@@ -54,21 +54,19 @@ for file in glob.glob(os.path.join(file_folder, '*.pdf')):
                 if match and invoiceNum is None:
                     invoiceNum = match.group(1)     
                          
-                if line.upper().endswith("DATA DA EMISSÃO") or line.upper().endswith("DATA EMISSÃO"):
+                if line.upper().endswith("DATA DA EMISSÃO") or line.upper().endswith("DATA EMISSÃO"): 
                     count = line_num
                     while True:
                         nextLine = lines_list[count + 1]
                         match = invoiceDate.search(nextLine)
-                        print("Checking line:", nextLine)
                         if match and invoiceDateValue is None:
                             invoiceDateValue = match.group(1)
-                            print("Invoice Date:", invoiceDateValue)
                         if nextLine.upper().endswith("SAÍDA"):
                             break
                         count += 1
-                if line.upper().startswith("JEEVES") and jeevesName is None:
-                    jeevesList = line.split(' ')
-                    jeevesName = ' '.join(jeevesList[:3])
+                if line.upper().startswith("JEEVES") and companyName is None: # Adjusted to match company name
+                    companyList = line.split(' ')
+                    companyName = ' '.join(companyList[:3])
                 if line.upper().startswith("DADOS DO PRODUTO"):
                     count = line_num
                     while True:
@@ -99,7 +97,7 @@ for file in glob.glob(os.path.join(file_folder, '*.pdf')):
     line_instance = lines(
         Category=None, Received_date=None, Invoice_date=invoiceDateValue, Due_Date=None, Amount=totalAmount, Currency="BRL",
         Supplier=supplierName, Description=prodList, Expense_Period=None, Requester=None, Approval=None,
-        Jeeves_Holding_Brasil_Jeeves_Brasil_Financas=jeevesName, Booked_AP=None, Paid_Not_Paid=None,
+        Company_Name=companyName, Booked_AP=None, Paid_Not_Paid=None,
         Date_for_schedule_payment=None, Payment_Date=None, Month=dateList[1], Year=dateList[2], Invoice=invoiceNum,
         Link=None, Note=None, PAID=None, Tax_to_pay=None, Banco=None, VENDOR_ID=None, DEP=None,
         Approval_status=None, Approval_support=None, Email_subject=None, Email_sender=None,
